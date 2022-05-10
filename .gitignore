@@ -1,0 +1,20 @@
+# Python
+build/
+venv/
+__pycache__/
+.eggs/
+*.egg-info/
+*.pyc
+
+# C extensions
+*.c
+*.so
+
+# SQLite3
+*.db
+
+# Profile
+*.stats
+*.png
+
+tmp/
