@@ -48,3 +48,9 @@ You can use optuna-fast-fanova in only two steps.
 
 [The benchmark script](./benchmark.py) was run on my laptop (M1 Pro Macbook) so the times should not be taken precisely.
 This library seems to be about more than 10-times faster than Optuna's FanovaImportanceExecutor (with Optuna v3.0.0b0).
+
+
+## How to cite fANOVA
+
+This is a derived work of https://github.com/automl/fanova.
+For how to cite the original work, please refer to https://automl.github.io/fanova/cite.html.
