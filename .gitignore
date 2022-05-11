@@ -1,5 +1,6 @@
 # Python
 build/
+dist/
 venv/
 __pycache__/
 .eggs/
