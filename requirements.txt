@@ -1,6 +1,6 @@
 numpy
 optuna
-cython
+cython>=3.0.0a10
 scikit-learn
 
 black
