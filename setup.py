@@ -56,7 +56,7 @@ if __name__ == "__main__":
             "Source": "https://github.com/optuna/optuna-fast-fanova",
             "Bug Tracker": "https://github.com/optuna/optuna-fast-fanova/issues",
         },
-        # Cython and scikit-learn are required when you want to build from sources.
+        # You need to install Cython when building this package from sources.
         setup_requires=["numpy", "scikit-learn"],
         install_requires=["optuna"],
         packages=find_packages(exclude=("tests", "tests.*")),

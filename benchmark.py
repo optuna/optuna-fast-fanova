@@ -4,7 +4,7 @@ import time
 import optuna
 from optuna.importance import FanovaImportanceEvaluator
 
-from fast_fanova import FastFanovaImportanceEvaluator
+from fast_fanova import FanovaImportanceEvaluator as FastFanovaImportanceEvaluator
 
 
 def objective(trial):

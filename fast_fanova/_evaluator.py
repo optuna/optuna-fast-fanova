@@ -19,7 +19,7 @@ from sklearn.ensemble import RandomForestRegressor
 from fast_fanova._fanova import FanovaTree
 
 
-class FastFanovaImportanceEvaluator(BaseImportanceEvaluator):
+class FanovaImportanceEvaluator(BaseImportanceEvaluator):
     """fANOVA importance evaluator.
 
     Args:

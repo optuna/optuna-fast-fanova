@@ -1,9 +1,5 @@
 # cython: language_level=3
 import itertools
-from typing import List
-from typing import Set
-from typing import Tuple
-from typing import Union
 
 import numpy as np
 
@@ -80,8 +76,8 @@ cdef class FanovaTree:
 
         sample = np.full(self._n_features(), fill_value=np.nan, dtype=np.float64)
 
-        values: Union[List[float], np.ndarray] = []
-        weights: Union[List[float], np.ndarray] = []
+        values = []
+        weights = []
 
         for midpoints, sizes in zip(product_midpoints, product_sizes):
             sample[features] = np.array(midpoints)
@@ -237,7 +233,7 @@ cdef class FanovaTree:
                 statistics[node_index] = [value, weight]
         return statistics
 
-    def _precompute_split_midpoints_and_sizes(self) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+    def _precompute_split_midpoints_and_sizes(self):
         midpoints = []
         sizes = []
 
@@ -258,8 +254,8 @@ cdef class FanovaTree:
 
         return midpoints, sizes
 
-    def _compute_features_split_values(self) -> List[np.ndarray]:
-        all_split_values: List[Set[float]] = [set() for _ in range(self._n_features())]
+    def _compute_features_split_values(self):
+        all_split_values = [set() for _ in range(self._n_features())]
 
         cdef int node_index, feature
 
@@ -269,7 +265,7 @@ cdef class FanovaTree:
                 threshold = self._get_node_split_threshold(node_index)
                 all_split_values[feature].add(threshold)
 
-        sorted_all_split_values: List[np.ndarray] = []
+        sorted_all_split_values = []
 
         for split_values in all_split_values:
             split_values_array = np.array(list(split_values), dtype=np.float64)
