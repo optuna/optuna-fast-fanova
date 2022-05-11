@@ -6,4 +6,5 @@ scikit-learn
 black
 isort
 flake8
+pytest
 gprof2dot
