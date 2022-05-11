@@ -16,7 +16,7 @@ exclude = '''
 
 [tool.isort]
 profile = 'black'
-src_paths = ['fast_fanova', 'tests']
+src_paths = ['optuna_fast_fanova', 'tests']
 line_length = 99
 lines_after_imports = 2
 force_single_line = 'True'

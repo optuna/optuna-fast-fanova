@@ -7,7 +7,7 @@ import os
 
 import optuna
 
-from fast_fanova import FastFanovaImportanceEvaluator
+from optuna_fast_fanova import FastFanovaImportanceEvaluator
 
 
 def objective(trial):

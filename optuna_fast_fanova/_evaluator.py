@@ -16,11 +16,11 @@ from optuna.trial import FrozenTrial
 from optuna.trial import TrialState
 from sklearn.ensemble import RandomForestRegressor
 
-from fast_fanova._fanova import FanovaTree
+from optuna_fast_fanova._fanova import FanovaTree
 
 
 class FanovaImportanceEvaluator(BaseImportanceEvaluator):
-    """fANOVA importance evaluator.
+    """Cython accelerated fANOVA importance evaluator.
 
     Args:
         n_trees:

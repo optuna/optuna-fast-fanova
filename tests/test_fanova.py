@@ -6,7 +6,7 @@ from optuna import Trial
 from optuna.samplers import RandomSampler
 import pytest
 
-from fast_fanova import FanovaImportanceEvaluator
+from optuna_fast_fanova import FanovaImportanceEvaluator
 
 
 try:

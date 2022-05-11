@@ -16,13 +16,13 @@ Usage is like this:
 
 ```python
 import optuna
-from fast_fanova import FanovaImportanceEvaluator
+from optuna_fast_fanova import FanovaImportanceEvaluator
 
 
 def objective(trial):
     x = trial.suggest_float("x", -10, 10)
     y = trial.suggest_int("y", -10, 10)
-    return x**2 + y
+    return x ** 2 + y
 
 
 if __name__ == "__main__":
@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
 You can use optuna-fast-fanova in only two steps.
 
-1. Add an import statement: `from fast_fanova import FanovaImportanceEvaluator`.
+1. Add an import statement: `from optuna_fast_fanova import FanovaImportanceEvaluator`.
 2. Pass a `FanovaImportanceEvaluator()` object to an `evaluator` argument of `get_param_importances()` function.
 
 | trials / params | fANOVA (Optuna) | fast-fanova | 

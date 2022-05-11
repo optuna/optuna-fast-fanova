@@ -36,7 +36,7 @@ def get_long_description() -> str:
 
 
 def get_version() -> str:
-    version_filepath = os.path.join(os.path.dirname(__file__), "fast_fanova", "__init__.py")
+    version_filepath = os.path.join(os.path.dirname(__file__), "optuna_fast_fanova", "__init__.py")
     with open(version_filepath) as f:
         for line in f:
             if line.startswith("__version__"):
@@ -62,14 +62,14 @@ if __name__ == "__main__":
         packages=find_packages(exclude=("tests", "tests.*")),
         ext_modules=[
             Extension(
-                "fast_fanova._fanova",
-                sources=[os.path.join("fast_fanova", "_fanova" + ext)],
+                "optuna_fast_fanova._fanova",
+                sources=[os.path.join("optuna_fast_fanova", "_fanova" + ext)],
                 language="c",
             )
         ],
         cmdclass={"build_ext": LazyImportBuildExt},
         include_package_data=False,
-        package_data={"fast_fanova": ["*.c", "*.pyx"]},
+        package_data={"optuna_fast_fanova": ["*.c", "*.pyx"]},
         classifiers=[
             "Development Status :: 2 - Pre-Alpha",
             "Intended Audience :: Science/Research",
