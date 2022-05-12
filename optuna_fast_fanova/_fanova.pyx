@@ -5,7 +5,7 @@ import numpy as np
 
 cimport cython
 cimport numpy as cnp
-from sklearn.tree._tree cimport Tree
+from sklearn.tree._tree cimport Tree, Node
 
 
 cnp.import_array()
@@ -182,46 +182,42 @@ cdef class FanovaTree:
         weighted_average = sum_weighted_value / sum_weight
         return weighted_average, sum_weight
 
+    @cython.boundscheck(False)
     def _precompute_statistics(self):
         cdef:
             double[:,:] statistics
             double[:,:,:] subspaces
             int node_index, n_nodes = self._tree.node_count
             double v1, v2, w1, w2
+            Node* node = self._tree.nodes
 
         # Holds for each node, its weighted average value and the sum of weights.
         statistics = np.empty((n_nodes, 2), dtype=np.float64)
         subspaces = np.empty(shape=(n_nodes, self._search_spaces.shape[0], 2), dtype=np.float64)
         subspaces[0, ...] = self._search_spaces
 
-        # Compute marginals for leaf nodes.
-        for node_index in range(n_nodes):
-            if self._is_node_leaf(node_index):
-                value = self._get_node_value(node_index)
-                weight = _get_cardinality(subspaces[node_index])
-                statistics[node_index][0] = value
-                statistics[node_index][1] = weight
-            else:
-                child_node_index = self._get_node_left_child(node_index)
-                self._get_node_left_child_subspaces(node_index, subspaces[node_index], subspaces[child_node_index])
+        with nogil:
+            # Compute marginals for leaf nodes.
+            for node_index in range(n_nodes):
+                node = self._tree.nodes + node_index
+                if node.feature < 0:
+                    statistics[node_index][0] = self._tree.value[node_index]
+                    statistics[node_index][1] = _get_cardinality(subspaces[node_index])
+                else:
+                    self._get_node_left_child_subspaces(node_index, subspaces[node_index], subspaces[node.left_child])
+                    self._get_node_right_child_subspaces(node_index, subspaces[node_index], subspaces[node.right_child])
 
-                child_node_index = self._get_node_right_child(node_index)
-                self._get_node_right_child_subspaces(node_index, subspaces[node_index], subspaces[child_node_index])
-
-        # Compute marginals for internal nodes.
-        for node_index in reversed(range(n_nodes)):
-            if not self._is_node_leaf(node_index):
-                child_node_index = self._get_node_left_child(node_index)
-                v1 = statistics[child_node_index, 0]
-                w1 = statistics[child_node_index, 1]
-
-                child_node_index = self._get_node_right_child(node_index)
-                v2 = statistics[child_node_index, 0]
-                w2 = statistics[child_node_index, 1]
-
-                # avg = sum(a * weights) / sum(weights)
-                statistics[node_index][0] = (v1 * w1 + v2 * w2) / (w1 + w2)
-                statistics[node_index][1] = w1 + w2
+            # Compute marginals for internal nodes.
+            for node_index in reversed(range(n_nodes)):
+                node = self._tree.nodes + node_index
+                if node.feature >= 0:
+                    v1 = statistics[node.left_child, 0]
+                    w1 = statistics[node.left_child, 1]
+                    v2 = statistics[node.right_child, 0]
+                    w2 = statistics[node.right_child, 1]
+                    # avg = sum(a * weights) / sum(weights)
+                    statistics[node_index][0] = (v1 * w1 + v2 * w2) / (w1 + w2)
+                    statistics[node_index][1] = w1 + w2
         return statistics
 
     def _precompute_split_midpoints_and_sizes(self):
@@ -294,9 +290,6 @@ cdef class FanovaTree:
     @cython.boundscheck(False)
     cdef inline int _get_node_right_child(self, int node_index) nogil:
         return self._tree_node_right_children[node_index]
-
-    cdef inline double _get_node_value(self, int node_index):
-        return self._tree.value[node_index]
 
     @cython.boundscheck(False)
     cdef inline double _get_node_split_threshold(self, int node_index) nogil:
