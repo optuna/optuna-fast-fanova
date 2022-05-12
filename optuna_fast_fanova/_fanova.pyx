@@ -30,10 +30,8 @@ cdef class FanovaTree:
         assert search_spaces.shape[1] == 2
 
         self._tree = tree
-        tree_node_ndarray = tree._get_node_ndarray()
-
         self._search_spaces = search_spaces
-        self._statistics = self._precompute_statistics()
+        self._statistics = _precompute_statistics(tree, search_spaces)
 
         split_midpoints, split_sizes = self._precompute_split_midpoints_and_sizes()
         subtree_active_features = self._precompute_subtree_active_features()
@@ -170,44 +168,6 @@ cdef class FanovaTree:
         weighted_average = sum_weighted_value / sum_weight
         return weighted_average, sum_weight
 
-    @cython.boundscheck(False)
-    def _precompute_statistics(self):
-        cdef:
-            double[:,:] statistics
-            double[:,:,:] subspaces
-            int node_index, n_nodes = self._tree.node_count
-            double v1, v2, w1, w2
-            Node* node = self._tree.nodes
-
-        # Holds for each node, its weighted average value and the sum of weights.
-        statistics = np.empty((n_nodes, 2), dtype=np.float64)
-        subspaces = np.empty(shape=(n_nodes, self._search_spaces.shape[0], 2), dtype=np.float64)
-        subspaces[0, ...] = self._search_spaces
-
-        with nogil:
-            # Compute marginals for leaf nodes.
-            for node_index in range(n_nodes):
-                node = self._tree.nodes + node_index
-                if node.feature < 0:
-                    statistics[node_index][0] = self._tree.value[node_index]
-                    statistics[node_index][1] = _get_cardinality(subspaces[node_index])
-                else:
-                    _get_node_left_child_subspaces(node, subspaces[node_index], subspaces[node.left_child])
-                    _get_node_right_child_subspaces(node, subspaces[node_index], subspaces[node.right_child])
-
-            # Compute marginals for internal nodes.
-            for node_index in reversed(range(n_nodes)):
-                node = self._tree.nodes + node_index
-                if node.feature >= 0:
-                    v1 = statistics[node.left_child, 0]
-                    w1 = statistics[node.left_child, 1]
-                    v2 = statistics[node.right_child, 0]
-                    w2 = statistics[node.right_child, 1]
-                    # avg = sum(a * weights) / sum(weights)
-                    statistics[node_index][0] = (v1 * w1 + v2 * w2) / (w1 + w2)
-                    statistics[node_index][1] = w1 + w2
-        return statistics
-
     def _precompute_split_midpoints_and_sizes(self):
         midpoints = []
         sizes = []
@@ -268,6 +228,45 @@ cdef class FanovaTree:
 
     cdef inline int _n_features(self):
         return self._search_spaces.shape[0]
+
+
+@cython.boundscheck(False)
+def _precompute_statistics(Tree tree, double[:,:] search_spaces):
+    cdef:
+        double[:,:] statistics
+        double[:,:,:] subspaces
+        int node_index, n_nodes = tree.node_count
+        double v1, v2, w1, w2
+        Node* node = tree.nodes
+
+    # Holds for each node, its weighted average value and the sum of weights.
+    statistics = np.empty((n_nodes, 2), dtype=np.float64)
+    subspaces = np.empty(shape=(n_nodes, search_spaces.shape[0], 2), dtype=np.float64)
+    subspaces[0, ...] = search_spaces
+
+    with nogil:
+        # Compute marginals for leaf nodes.
+        for node_index in range(n_nodes):
+            node = tree.nodes + node_index
+            if node.feature < 0:
+                statistics[node_index][0] = tree.value[node_index]
+                statistics[node_index][1] = _get_cardinality(subspaces[node_index])
+            else:
+                _get_node_left_child_subspaces(node, subspaces[node_index], subspaces[node.left_child])
+                _get_node_right_child_subspaces(node, subspaces[node_index], subspaces[node.right_child])
+
+        # Compute marginals for internal nodes.
+        for node_index in reversed(range(n_nodes)):
+            node = tree.nodes + node_index
+            if node.feature >= 0:
+                v1 = statistics[node.left_child, 0]
+                w1 = statistics[node.left_child, 1]
+                v2 = statistics[node.right_child, 0]
+                w2 = statistics[node.right_child, 1]
+                # avg = sum(a * weights) / sum(weights)
+                statistics[node_index][0] = (v1 * w1 + v2 * w2) / (w1 + w2)
+                statistics[node_index][1] = w1 + w2
+    return statistics
 
 
 @cython.boundscheck(False)
