@@ -12,7 +12,10 @@ optuna.logging.set_verbosity(optuna.logging.ERROR)
 
 def run_optimize(storage, trials, params):
     study_name = f"study-trial{trials}-params{params}"
-    study = optuna.create_study(storage=storage, study_name=study_name)
+    study = optuna.create_study(storage=storage, study_name=study_name, load_if_exists=True)
+
+    if len(study.trials) > 0:
+        return study
 
     def objective(trial: optuna.Trial):
         val = 0
