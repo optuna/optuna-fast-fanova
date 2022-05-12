@@ -7,9 +7,10 @@ cimport cython
 cimport numpy as cnp
 from sklearn.tree._tree cimport Tree, Node
 
-
 cnp.import_array()
 
+
+ctypedef cnp.npy_intp SIZE_t  # Type for indices and counters
 
 cdef extern from "math.h" nogil:
     bint isnan(double x)
@@ -18,10 +19,6 @@ cdef extern from "math.h" nogil:
 cdef class FanovaTree:
     cdef:
         Tree _tree
-        double[:] _tree_node_threshold
-        long long[:] _tree_node_features
-        long long[:] _tree_node_right_children
-        long long[:] _tree_node_left_children
         double [:,:] _statistics, _search_spaces
         cnp.npy_bool[:,:] _subtree_active_features
         double _variance
@@ -34,10 +31,6 @@ cdef class FanovaTree:
 
         self._tree = tree
         tree_node_ndarray = tree._get_node_ndarray()
-        self._tree_node_threshold = tree_node_ndarray['threshold']
-        self._tree_node_features = tree_node_ndarray['feature']
-        self._tree_node_right_children = tree_node_ndarray['right_child']
-        self._tree_node_left_children = tree_node_ndarray['left_child']
 
         self._search_spaces = search_spaces
         self._statistics = self._precompute_statistics()
@@ -119,11 +112,11 @@ cdef class FanovaTree:
             cnp.ndarray next_subspace
             double[:,:] buf
             cnp.ndarray[cnp.npy_bool, cast=True, ndim=1] marginalized_features, active_features
-
-            int i, node_index, next_node_index, feature, active_nodes_index
             double response
 
             double sum_weighted_value = 0, sum_weight = 0, tmp_weight, weighted_average
+            SIZE_t i, node_index, active_nodes_index
+            Node* node
 
         # Start from the root and traverse towards the leafs.
         active_nodes_index = 0
@@ -140,37 +133,32 @@ cdef class FanovaTree:
 
         while active_nodes_index >= 0:
             node_index = active_nodes[active_nodes_index]
+            node = self._tree.nodes + node_index
             search_spaces = active_search_spaces[active_nodes_index]
             active_nodes_index -= 1
 
-            feature = self._get_node_split_feature(node_index)
-            if feature >= 0:  # Not leaf. Avoid unnecessary call to `_is_node_leaf`.
+            if node.feature >= 0:  # Not leaf.
                 # If node splits on an active feature, push the child node that we end up in.
-                response = feature_vector[feature]
+                response = feature_vector[node.feature]
                 if not isnan(response):
                     active_nodes_index += 1
                     buf = active_search_spaces[active_nodes_index]
-                    if response <= self._get_node_split_threshold(node_index):
-                        next_node_index = self._get_node_left_child(node_index)
-                        self._get_node_left_child_subspaces(
-                            node_index, search_spaces, buf
-                        )
+                    if response <= node.threshold:
+                        _get_node_left_child_subspaces(node, search_spaces, buf)
+                        active_nodes[active_nodes_index] = node.left_child
                     else:
-                        next_node_index = self._get_node_right_child(node_index)
-                        self._get_node_right_child_subspaces(
-                            node_index, search_spaces, buf
-                        )
-                    active_nodes[active_nodes_index] = next_node_index
+                        _get_node_right_child_subspaces(node, search_spaces, buf)
+                        active_nodes[active_nodes_index] = node.right_child
                     continue
 
                 # If subtree starting from node splits on an active feature, push both child nodes.
                 if self._is_subtree_active(node_index, active_features) == 1:
                     active_nodes_index += 1
-                    active_nodes[active_nodes_index] = self._get_node_left_child(node_index)
+                    active_nodes[active_nodes_index] = node.left_child
                     active_search_spaces[active_nodes_index] = search_spaces
 
                     active_nodes_index += 1
-                    active_nodes[active_nodes_index] = self._get_node_right_child(node_index)
+                    active_nodes[active_nodes_index] = node.right_child
                     active_search_spaces[active_nodes_index] = search_spaces
                     continue
 
@@ -204,8 +192,8 @@ cdef class FanovaTree:
                     statistics[node_index][0] = self._tree.value[node_index]
                     statistics[node_index][1] = _get_cardinality(subspaces[node_index])
                 else:
-                    self._get_node_left_child_subspaces(node_index, subspaces[node_index], subspaces[node.left_child])
-                    self._get_node_right_child_subspaces(node_index, subspaces[node_index], subspaces[node.right_child])
+                    _get_node_left_child_subspaces(node, subspaces[node_index], subspaces[node.left_child])
+                    _get_node_right_child_subspaces(node, subspaces[node_index], subspaces[node.right_child])
 
             # Compute marginals for internal nodes.
             for node_index in reversed(range(n_nodes)):
@@ -245,13 +233,14 @@ cdef class FanovaTree:
     def _compute_features_split_values(self):
         all_split_values = [set() for _ in range(self._n_features())]
 
-        cdef int node_index, feature
+        cdef:
+            int node_index
+            Node* node
 
         for node_index in range(self._tree.node_count):
-            feature = self._get_node_split_feature(node_index)
-            if feature >= 0:  # Not leaf. Avoid unnecessary call to `_is_node_leaf`.
-                threshold = self._get_node_split_threshold(node_index)
-                all_split_values[feature].add(threshold)
+            node = self._tree.nodes + node_index
+            if node.feature >= 0:  # Not leaf.
+                all_split_values[node.feature].add(node.threshold)
 
         sorted_all_split_values = []
 
@@ -264,62 +253,21 @@ cdef class FanovaTree:
 
     cdef cnp.npy_bool[:,:] _precompute_subtree_active_features(self):
         cdef:
-            int node_index, child_node_index
+            int node_index
             cnp.ndarray subtree_active_features = np.full((self._tree.node_count, self._n_features()), fill_value=False)
+            Node* node
 
         for node_index in reversed(range(self._tree.node_count)):
-            feature = self._get_node_split_feature(node_index)
-            if feature >= 0:  # Not leaf. Avoid unnecessary call to `_is_node_leaf`.
-                subtree_active_features[node_index, feature] = True
-                subtree_active_features[node_index] |= subtree_active_features[self._get_node_left_child(node_index)]
-                subtree_active_features[node_index] |= subtree_active_features[self._get_node_right_child(node_index)]
+            node = self._tree.nodes + node_index
+            if node.feature >= 0:
+                subtree_active_features[node_index, node.feature] = True
+                subtree_active_features[node_index] |= subtree_active_features[node.left_child]
+                subtree_active_features[node_index] |= subtree_active_features[node.right_child]
 
         return subtree_active_features
 
     cdef inline int _n_features(self):
         return self._search_spaces.shape[0]
-
-    @cython.boundscheck(False)
-    cdef inline bint _is_node_leaf(self, int node_index) nogil:
-        return self._tree_node_features[node_index] < 0
-
-    @cython.boundscheck(False)
-    cdef inline int _get_node_left_child(self, int node_index) nogil:
-        return self._tree_node_left_children[node_index]
-
-    @cython.boundscheck(False)
-    cdef inline int _get_node_right_child(self, int node_index) nogil:
-        return self._tree_node_right_children[node_index]
-
-    @cython.boundscheck(False)
-    cdef inline double _get_node_split_threshold(self, int node_index) nogil:
-        return self._tree_node_threshold[node_index]
-
-    @cython.boundscheck(False)
-    cdef inline int _get_node_split_feature(self, int node_index) nogil:
-        return self._tree_node_features[node_index]
-
-    cdef inline void _get_node_left_child_subspaces(
-        self, int node_index, double[:,:] search_spaces, double[:,:] buf
-    ) nogil:
-        _get_subspaces(
-            search_spaces,
-            1,
-            self._get_node_split_feature(node_index),
-            self._get_node_split_threshold(node_index),
-            buf,
-        )
-
-    cdef inline void _get_node_right_child_subspaces(
-        self, int node_index, double[:,:] search_spaces, double[:,:] buf
-    ) nogil:
-        _get_subspaces(
-            search_spaces,
-            0,
-            self._get_node_split_feature(node_index),
-            self._get_node_split_threshold(node_index),
-            buf,
-        )
 
 
 @cython.boundscheck(False)
@@ -328,6 +276,18 @@ cdef inline double _get_cardinality(double[:,:] search_spaces) nogil:
     for i in range(search_spaces.shape[0]):
         result *= search_spaces[i, 1] - search_spaces[i, 0]
     return result
+
+
+cdef inline void _get_node_left_child_subspaces(
+    Node* node, double[:,:] search_spaces, double[:,:] buf
+) nogil:
+    _get_subspaces(search_spaces, 1, node.feature, node.threshold, buf)
+
+
+cdef inline void _get_node_right_child_subspaces(
+    Node* node, double[:,:] search_spaces, double[:,:] buf
+) nogil:
+    _get_subspaces(search_spaces, 0, node.feature, node.threshold, buf)
 
 
 @cython.boundscheck(False)
