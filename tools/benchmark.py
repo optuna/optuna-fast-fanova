@@ -7,6 +7,7 @@ from optuna.importance import FanovaImportanceEvaluator
 
 from optuna_fast_fanova import FanovaImportanceEvaluator as FastFanovaImportanceEvaluator
 
+
 optuna.logging.set_verbosity(optuna.logging.ERROR)
 
 
@@ -33,7 +34,9 @@ def print_markdown_table(results):
     print("| -------- | -------- | ------- | --------------- | ----------- |")
 
     for n_trials, n_params, n_trees, s1, s2 in results:
-        print(f"| {n_trials} | {n_params} | {n_trees} | {s1:.3f}s | {s2:.3f}s (-{(s1-s2)/s1*100:.1f}%) |")
+        print(
+            f"| {n_trials} | {n_params} | {n_trees} | {s1:.3f}s | {s2:.3f}s (-{(s1-s2)/s1*100:.1f}%) |"
+        )
 
 
 def is_importance_close(a, b):
@@ -61,7 +64,9 @@ def main():
             )
             elapsed_after = time.time() - start
 
-            print(f"Before: n_trees={n_trees} elapsed={elapsed_before:.3f}\t{dict(importances_before)}")
+            print(
+                f"Before: n_trees={n_trees} elapsed={elapsed_before:.3f}\t{dict(importances_before)}"
+            )
             print(f"After:  n_trees={n_trees} elapsed={elapsed_after:.3f}\t{importances_after}")
             is_importance_close(importances_before, importances_after)
 
@@ -69,5 +74,5 @@ def main():
     print_markdown_table(results)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

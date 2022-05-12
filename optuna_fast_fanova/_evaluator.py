@@ -183,7 +183,9 @@ def _fast_intersection_search_space(completed_trials: List[FrozenTrial]):
     return {k: copy.copy(search_space[k]) for k in sorted(search_space)}
 
 
-def _fast_check_evaluate_args(completed_trials: List[FrozenTrial], params: Optional[List[str]]) -> None:
+def _fast_check_evaluate_args(
+    completed_trials: List[FrozenTrial], params: Optional[List[str]]
+) -> None:
     if len(completed_trials) == 0:
         raise ValueError("Cannot evaluate parameter importances without completed trials.")
     if len(completed_trials) == 1:
@@ -213,7 +215,9 @@ def _fast_check_evaluate_args(completed_trials: List[FrozenTrial], params: Optio
                 )
 
 
-def _fast_get_distributions(completed_trials: List[FrozenTrial], params: Optional[List[str]]) -> Dict[str, BaseDistribution]:
+def _fast_get_distributions(
+    completed_trials: List[FrozenTrial], params: Optional[List[str]]
+) -> Dict[str, BaseDistribution]:
     # New temporary required to pass mypy. Seems like a bug.
     params_not_none = params
     assert params_not_none is not None
@@ -227,9 +231,7 @@ def _fast_get_distributions(completed_trials: List[FrozenTrial], params: Optiona
 
         if distributions is None:
             distributions = {
-                k: trial_distributions[k]
-                for k in trial_distributions
-                if k in params_not_none
+                k: trial_distributions[k] for k in trial_distributions if k in params_not_none
             }
             continue
 

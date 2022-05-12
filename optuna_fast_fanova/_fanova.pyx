@@ -5,7 +5,9 @@ import numpy as np
 
 cimport cython
 cimport numpy as cnp
-from sklearn.tree._tree cimport Tree, Node
+from sklearn.tree._tree cimport Node
+from sklearn.tree._tree cimport Tree
+
 
 cnp.import_array()
 

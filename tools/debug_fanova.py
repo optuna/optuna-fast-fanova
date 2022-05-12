@@ -1,6 +1,9 @@
 import optuna
+
 from optuna_fast_fanova import FanovaImportanceEvaluator
-#from optuna.importance import FanovaImportanceEvaluator
+
+
+# from optuna.importance import FanovaImportanceEvaluator
 
 optuna.logging.set_verbosity(optuna.logging.ERROR)
 

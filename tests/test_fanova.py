@@ -89,7 +89,9 @@ def test_fanova_importance_evaluator_with_target() -> None:
     assert param_importance != param_importance_with_target
 
 
-@pytest.mark.skipif(FloatDistribution is None, reason="This test case requires Optuna 3.0 or later.")
+@pytest.mark.skipif(
+    FloatDistribution is None, reason="This test case requires Optuna 3.0 or later."
+)
 @pytest.mark.parametrize("inf_value", [float("inf"), -float("inf")])
 def test_fanova_importance_evaluator_with_infinite(inf_value: float) -> None:
     # The test ensures that trials with infinite values are ignored to calculate importance scores.
@@ -123,7 +125,9 @@ def test_fanova_importance_evaluator_with_infinite(inf_value: float) -> None:
     assert param_importance_with_inf == param_importance_without_inf
 
 
-@pytest.mark.skipif(FloatDistribution is None, reason="This test case requires Optuna 3.0 or later.")
+@pytest.mark.skipif(
+    FloatDistribution is None, reason="This test case requires Optuna 3.0 or later."
+)
 @pytest.mark.parametrize("target_idx", [0, 1])
 @pytest.mark.parametrize("inf_value", [float("inf"), -float("inf")])
 def test_multi_objective_fanova_importance_evaluator_with_infinite(
