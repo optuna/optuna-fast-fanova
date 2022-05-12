@@ -1,3 +1,4 @@
+import copy
 from typing import Callable
 from typing import cast
 from typing import Dict
@@ -9,8 +10,9 @@ from typing import Union
 
 import numpy as np
 from optuna._transform import _SearchSpaceTransform
-from optuna.importance._base import _get_distributions
+from optuna.distributions import BaseDistribution
 from optuna.importance._base import BaseImportanceEvaluator
+from optuna.samplers import intersection_search_space
 from optuna.study import Study
 from optuna.trial import FrozenTrial
 from optuna.trial import TrialState
@@ -57,7 +59,7 @@ class FanovaImportanceEvaluator(BaseImportanceEvaluator):
                 "`target=lambda t: t.values[0]` for the first objective value."
             )
 
-        distributions = _get_distributions(study, params)
+        distributions = _fast_get_distributions(study, params)
         if len(distributions) == 0:
             return {}
 
@@ -154,6 +156,75 @@ def get_importance(
 
     fractions = np.asarray(fractions)
     return float(fractions.mean()), float(fractions.std())
+
+
+def _fast_check_evaluate_args(completed_trials: List[FrozenTrial], params: Optional[List[str]]) -> None:
+    if len(completed_trials) == 0:
+        raise ValueError("Cannot evaluate parameter importances without completed trials.")
+    if len(completed_trials) == 1:
+        raise ValueError("Cannot evaluate parameter importances with only a single trial.")
+
+    if params is not None:
+        if not isinstance(params, (list, tuple)):
+            raise TypeError(
+                "Parameters must be specified as a list. Actual parameters: {}.".format(params)
+            )
+        if any(not isinstance(p, str) for p in params):
+            raise TypeError(
+                "Parameters must be specified by their names with strings. Actual parameters: "
+                "{}.".format(params)
+            )
+
+        if len(params) > 0:
+            at_least_one_trial = False
+            for trial in completed_trials:
+                if all(p in trial.distributions for p in params):
+                    at_least_one_trial = True
+                    break
+            if not at_least_one_trial:
+                raise ValueError(
+                    "Study must contain completed trials with all specified parameters. "
+                    "Specified parameters: {}.".format(params)
+                )
+
+
+def _fast_get_distributions(study: Study, params: Optional[List[str]]) -> Dict[str, BaseDistribution]:
+    completed_trials = study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,))
+    _fast_check_evaluate_args(completed_trials, params)
+
+    if params is None:
+        return intersection_search_space(study, ordered_dict=True)
+
+    # New temporary required to pass mypy. Seems like a bug.
+    params_not_none = params
+    assert params_not_none is not None
+
+    # Compute the search space based on the subset of trials containing all parameters.
+    distributions = None
+    for trial in completed_trials:
+        trial_distributions = trial.distributions
+        if not all(name in trial_distributions for name in params_not_none):
+            continue
+
+        if distributions is None:
+            distributions = {
+                k: trial_distributions[k]
+                for k in trial_distributions
+                if k in params_not_none
+            }
+            continue
+
+        if any(
+            trial_distributions[name] != distribution
+            for name, distribution in distributions.items()
+        ):
+            raise ValueError(
+                "Parameters importances cannot be assessed with dynamic search spaces if "
+                "parameters are specified. Specified parameters: {}.".format(params)
+            )
+
+    assert distributions is not None  # Required to pass mypy.
+    return {k: copy.copy(distributions[k]) for k in sorted(distributions)}
 
 
 def _filter_nonfinite(
