@@ -33,7 +33,7 @@ def print_markdown_table(results):
     print("| -------- | -------- | ------- | --------------- | ----------- |")
 
     for n_trials, n_params, n_trees, s1, s2 in results:
-        print(f"| {n_trials} | {n_params} | {n_trees} | {s1:.3f}s | {s2:.3f}s (-{s1-s2/s1*100:.1f}%) |")
+        print(f"| {n_trials} | {n_params} | {n_trees} | {s1:.3f}s | {s2:.3f}s (-{(s1-s2)/s1*100:.1f}%) |")
 
 
 def is_importance_close(a, b):

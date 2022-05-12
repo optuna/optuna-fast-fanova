@@ -59,7 +59,13 @@ class FanovaImportanceEvaluator(BaseImportanceEvaluator):
                 "`target=lambda t: t.values[0]` for the first objective value."
             )
 
-        distributions = _fast_get_distributions(study, params)
+        completed_trials = study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,))
+        _fast_check_evaluate_args(completed_trials, params)
+        if params is None:
+            distributions = intersection_search_space(study)
+        else:
+            distributions = _fast_get_distributions(completed_trials, params)
+
         if len(distributions) == 0:
             return {}
 
@@ -70,9 +76,7 @@ class FanovaImportanceEvaluator(BaseImportanceEvaluator):
         distributions = {name: dist for name, dist in distributions.items() if not dist.single()}
 
         trials = []
-        for trial in _filter_nonfinite(
-            study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,)), target=target
-        ):
+        for trial in _filter_nonfinite(completed_trials, target=target):
             if any(name not in trial.params for name in distributions.keys()):
                 continue
             trials.append(trial)
@@ -158,6 +162,27 @@ def get_importance(
     return float(fractions.mean()), float(fractions.std())
 
 
+def _fast_intersection_search_space(completed_trials: List[FrozenTrial]):
+    search_space = None
+    for trial in reversed(completed_trials):
+        if search_space is None:
+            search_space = trial.distributions
+            continue
+
+        delete_list = []
+        for param_name, param_distribution in search_space.items():
+            if param_name not in trial.distributions:
+                delete_list.append(param_name)
+            elif trial.distributions[param_name] != param_distribution:
+                delete_list.append(param_name)
+
+        for param_name in delete_list:
+            del search_space[param_name]
+
+    search_space = search_space or {}
+    return {k: copy.copy(search_space[k]) for k in sorted(search_space)}
+
+
 def _fast_check_evaluate_args(completed_trials: List[FrozenTrial], params: Optional[List[str]]) -> None:
     if len(completed_trials) == 0:
         raise ValueError("Cannot evaluate parameter importances without completed trials.")
@@ -188,13 +213,7 @@ def _fast_check_evaluate_args(completed_trials: List[FrozenTrial], params: Optio
                 )
 
 
-def _fast_get_distributions(study: Study, params: Optional[List[str]]) -> Dict[str, BaseDistribution]:
-    completed_trials = study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,))
-    _fast_check_evaluate_args(completed_trials, params)
-
-    if params is None:
-        return intersection_search_space(study, ordered_dict=True)
-
+def _fast_get_distributions(completed_trials: List[FrozenTrial], params: Optional[List[str]]) -> Dict[str, BaseDistribution]:
     # New temporary required to pass mypy. Seems like a bug.
     params_not_none = params
     assert params_not_none is not None
