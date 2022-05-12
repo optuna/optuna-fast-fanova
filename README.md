@@ -5,9 +5,9 @@ optuna-fast-fanova provides Cython-accelerated version of [FanovaImportanceEvalu
 
 | n_trials | n_params | n_trees      | fANOVA (Optuna) | fast-fanova     |
 |----------|----------|--------------|-----------------|-----------------|
-| 1000     | 2        | 64 (default) | 51.937s         | 2.978s (-94.3%) |
-| 1000     | 8        | 64 (default) | 92.360s         | 5.836s (-93.7%) |
 | 1000     | 32       | 64 (default) | 71.044s         | 6.198s (-91.3%) |
+| 1000     | 8        | 64 (default) | 92.360s         | 5.836s (-93.7%) |
+| 1000     | 2        | 64 (default) | 51.937s         | 2.978s (-94.3%) |
 | 1000     | 32       | 32           | 35.852s         | 3.147s (-91.2%) |
 | 1000     | 8        | 32           | 46.271s         | 2.938s (-93.7%) |
 | 1000     | 2        | 32           | 26.196s         | 1.497s (-94.3%) |
