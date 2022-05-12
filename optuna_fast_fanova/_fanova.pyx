@@ -79,10 +79,16 @@ cdef class FanovaTree:
         values = []
         weights = []
 
+        cdef:
+            int[:] active_nodes_buf
+            double[:, :, :] active_search_spaces_buf
+        active_nodes_buf = np.empty(shape=self._tree.node_count, dtype=np.int32)
+        active_search_spaces_buf = np.empty(shape=(self._tree.node_count, self._search_spaces.shape[0], 2), dtype=np.float64)
+
         for midpoints, sizes in zip(product_midpoints, product_sizes):
             sample[features] = np.array(midpoints)
 
-            value, weight = self._get_marginalized_statistics(sample)
+            value, weight = self._get_marginalized_statistics(sample, active_nodes_buf, active_search_spaces_buf)
             weight *= float(np.prod(sizes))
 
             values = np.append(values, value)
@@ -106,12 +112,12 @@ cdef class FanovaTree:
                 return True
         return False
 
-    cdef (double, double) _get_marginalized_statistics(self, double[:] feature_vector):
+    cdef (double, double) _get_marginalized_statistics(
+        self, double[:] feature_vector, int[:] active_nodes, double[:, :, :] active_search_spaces
+    ):
         cdef:
             cnp.ndarray next_subspace
-            int[:] active_nodes
             double[:,:] buf
-            double[:,:,:] active_search_spaces
             cnp.ndarray[cnp.npy_bool, cast=True, ndim=1] marginalized_features, active_features
 
             int i, node_index, next_node_index, feature, active_nodes_index
@@ -121,15 +127,10 @@ cdef class FanovaTree:
 
         # Start from the root and traverse towards the leafs.
         active_nodes_index = 0
-        # TODO(c-bata): We may reduce memory buffer size here.
-        active_nodes = np.empty(shape=self._tree.node_count, dtype=np.int32)
-        active_search_spaces = np.empty(shape=(self._tree.node_count, self._search_spaces.shape[0], 2), dtype=np.float64)
-
         active_nodes[active_nodes_index] = 0
         active_search_spaces[active_nodes_index, ...] = self._search_spaces
 
         active_features = np.zeros_like(np.asarray(feature_vector), dtype=np.bool_)
-
         for i in range(feature_vector.shape[0]):
             if isnan(feature_vector[i]):
                 active_search_spaces[active_nodes_index, i, 0] = 0.0
