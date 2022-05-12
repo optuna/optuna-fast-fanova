@@ -1,4 +1,5 @@
 # cython: language_level=3
+# cython: profile=True
 import itertools
 
 import numpy as np
@@ -57,6 +58,12 @@ cdef class FanovaTree:
         return self._variance
 
     def get_marginal_variance(self, features: np.ndarray) -> float:
+        cdef:
+            SIZE_t i, n_loop = 1
+            int[:] active_nodes_buf
+            double[:, :, :] active_search_spaces_buf
+            double[:] values, weights
+
         assert features.size > 0
 
         # For each midpoint along the given dimensions, traverse this tree to compute the
@@ -64,31 +71,28 @@ cdef class FanovaTree:
         midpoints = [self._split_midpoints[f] for f in features]
         sizes = [self._split_sizes[f] for f in features]
 
+        for m in midpoints:
+            n_loop *= len(m)
+
         product_midpoints = itertools.product(*midpoints)
         product_sizes = itertools.product(*sizes)
 
         sample = np.full(self._n_features(), fill_value=np.nan, dtype=np.float64)
 
-        values = []
-        weights = []
-
-        cdef:
-            int[:] active_nodes_buf
-            double[:, :, :] active_search_spaces_buf
         active_nodes_buf = np.empty(shape=self._tree.node_count, dtype=np.int32)
         active_search_spaces_buf = np.empty(shape=(self._tree.node_count, self._search_spaces.shape[0], 2), dtype=np.float64)
 
-        for midpoints, sizes in zip(product_midpoints, product_sizes):
+        values = np.empty(shape=n_loop, dtype=np.float64)
+        weights = np.empty_like(values)
+        for i, (midpoints, sizes) in enumerate(zip(product_midpoints, product_sizes)):
             sample[features] = np.array(midpoints)
 
             value, weight = self._get_marginalized_statistics(sample, active_nodes_buf, active_search_spaces_buf)
             weight *= float(np.prod(sizes))
 
-            values = np.append(values, value)
-            weights = np.append(weights, weight)
+            values[i] = value
+            weights[i] = weight
 
-        weights = np.asarray(weights)
-        values = np.asarray(values)
         average_values = np.average(values, weights=weights)
         variance = np.average((values - average_values) ** 2, weights=weights)
 
