@@ -17,7 +17,7 @@ optuna-fast-fanova provides Cython-accelerated version of [FanovaImportanceEvalu
 | 100      | 8        | 32           | 1.114s          | 0.292s (-73.8%) |
 | 100      | 2        | 32           | 0.815s          | 0.237s (-70.9%) |
 
-[The benchmark script](./benchmark.py) was run on my laptop so the times should not be taken precisely.
+[The benchmark script](./tools/benchmark.py) was run on my laptop so the times should not be taken precisely.
 
 ### Installation
 
