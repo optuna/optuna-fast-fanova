@@ -121,6 +121,7 @@ cdef class FanovaTree:
 
         # Start from the root and traverse towards the leafs.
         active_nodes_index = 0
+        # TODO(c-bata): We may reduce memory buffer size here.
         active_nodes = np.empty(shape=self._tree.node_count, dtype=np.int32)
         active_search_spaces = np.empty(shape=(self._tree.node_count, self._search_spaces.shape[0], 2), dtype=np.float64)
 
@@ -182,40 +183,31 @@ cdef class FanovaTree:
 
     def _precompute_statistics(self):
         cdef:
-            double[:,:] child_subspace
             double[:,:] statistics
-            int n_nodes = self._tree.node_count
+            double[:,:,:] subspaces
+            int node_index, n_nodes = self._tree.node_count
+            double v1, v2, w1, w2
 
         # Holds for each node, its weighted average value and the sum of weights.
         statistics = np.empty((n_nodes, 2), dtype=np.float64)
-        subspaces = np.array([None for _ in range(n_nodes)])
-        subspaces[0] = np.asarray(self._search_spaces, dtype=np.float64)
+        subspaces = np.empty(shape=(n_nodes, self._search_spaces.shape[0], 2), dtype=np.float64)
+        subspaces[0, ...] = self._search_spaces
 
         # Compute marginals for leaf nodes.
         for node_index in range(n_nodes):
-            subspace = subspaces[node_index]
-
             if self._is_node_leaf(node_index):
                 value = self._get_node_value(node_index)
-                weight = _get_cardinality(subspace)
+                weight = _get_cardinality(subspaces[node_index])
                 statistics[node_index][0] = value
                 statistics[node_index][1] = weight
             else:
                 child_node_index = self._get_node_left_child(node_index)
-                child_subspace = np.copy(subspace)
-                self._get_node_left_child_subspaces(node_index, subspace, child_subspace)
-                assert subspaces[child_node_index] is None
-                subspaces[child_node_index] = child_subspace
+                self._get_node_left_child_subspaces(node_index, subspaces[node_index], subspaces[child_node_index])
 
                 child_node_index = self._get_node_right_child(node_index)
-                child_subspace = np.copy(subspace)
-                self._get_node_right_child_subspaces(node_index, subspace, child_subspace)
-                assert subspaces[child_node_index] is None
-                subspaces[child_node_index] = child_subspace
+                self._get_node_right_child_subspaces(node_index, subspaces[node_index], subspaces[child_node_index])
 
         # Compute marginals for internal nodes.
-        cdef:
-            double v1, v2, w1, w2
         for node_index in reversed(range(n_nodes)):
             if not self._is_node_leaf(node_index):
                 child_node_index = self._get_node_left_child(node_index)
