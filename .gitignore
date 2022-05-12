@@ -7,9 +7,10 @@ __pycache__/
 *.egg-info/
 *.pyc
 
-# C extensions
+## Cython
 *.c
 *.so
+*.html
 
 # SQLite3
 *.db

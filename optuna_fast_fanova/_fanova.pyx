@@ -119,8 +119,6 @@ cdef class FanovaTree:
 
             double sum_weighted_value = 0, sum_weight = 0, tmp_weight, weighted_average
 
-        assert feature_vector.size == self._n_features()
-
         # Start from the root and traverse towards the leafs.
         active_nodes_index = 0
         active_nodes = np.empty(shape=self._tree.node_count, dtype=np.int32)
@@ -236,6 +234,7 @@ cdef class FanovaTree:
     def _precompute_split_midpoints_and_sizes(self):
         midpoints = []
         sizes = []
+        cdef int feature
 
         search_spaces = self._search_spaces
         for feature, feature_split_values in enumerate(self._compute_features_split_values()):

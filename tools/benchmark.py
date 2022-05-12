@@ -14,7 +14,7 @@ def run_optimize(storage, trials, params):
     study_name = f"study-trial{trials}-params{params}"
     study = optuna.create_study(storage=storage, study_name=study_name, load_if_exists=True)
 
-    if len(study.trials) > 0:
+    if len(study.trials) >= trials:
         return study
 
     def objective(trial: optuna.Trial):
@@ -24,7 +24,7 @@ def run_optimize(storage, trials, params):
             val += (xi - 2) ** 2
         return val
 
-    study.optimize(objective, n_trials=trials)
+    study.optimize(objective, n_trials=trials - len(study.trials))
     return study
 
 
@@ -46,7 +46,7 @@ def is_importance_close(a, b):
 def main():
     storage = "sqlite:///benchmark-fanova.db"
     results = []
-    for n_trials, n_params in itertools.product([1000, 100], [32, 8, 2]):
+    for n_trials, n_params in itertools.product([100, 1000], [2, 8, 32]):
         study = run_optimize(storage, n_trials, n_params)
         for n_trees in [32, 64]:
             start = time.time()
