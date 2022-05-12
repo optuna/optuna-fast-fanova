@@ -180,14 +180,14 @@ cdef class FanovaTree:
         weighted_average = sum_weighted_value / sum_weight
         return weighted_average, sum_weight
 
-    def _precompute_statistics(self) -> np.ndarray:
-        cdef double[:,:] child_subspace
-
-        n_nodes = self._tree.node_count
+    def _precompute_statistics(self):
+        cdef:
+            double[:,:] child_subspace
+            double[:,:] statistics
+            int n_nodes = self._tree.node_count
 
         # Holds for each node, its weighted average value and the sum of weights.
         statistics = np.empty((n_nodes, 2), dtype=np.float64)
-
         subspaces = np.array([None for _ in range(n_nodes)])
         subspaces[0] = np.asarray(self._search_spaces, dtype=np.float64)
 
@@ -198,7 +198,8 @@ cdef class FanovaTree:
             if self._is_node_leaf(node_index):
                 value = self._get_node_value(node_index)
                 weight = _get_cardinality(subspace)
-                statistics[node_index] = [value, weight]
+                statistics[node_index][0] = value
+                statistics[node_index][1] = weight
             else:
                 child_node_index = self._get_node_left_child(node_index)
                 child_subspace = np.copy(subspace)
@@ -213,22 +214,21 @@ cdef class FanovaTree:
                 subspaces[child_node_index] = child_subspace
 
         # Compute marginals for internal nodes.
+        cdef:
+            double v1, v2, w1, w2
         for node_index in reversed(range(n_nodes)):
             if not self._is_node_leaf(node_index):
-                child_values = []
-                child_weights = []
-
                 child_node_index = self._get_node_left_child(node_index)
-                child_values.append(statistics[child_node_index, 0])
-                child_weights.append(statistics[child_node_index, 1])
+                v1 = statistics[child_node_index, 0]
+                w1 = statistics[child_node_index, 1]
 
                 child_node_index = self._get_node_right_child(node_index)
-                child_values.append(statistics[child_node_index, 0])
-                child_weights.append(statistics[child_node_index, 1])
+                v2 = statistics[child_node_index, 0]
+                w2 = statistics[child_node_index, 1]
 
-                value = np.average(child_values, weights=child_weights)
-                weight = float(np.sum(child_weights))
-                statistics[node_index] = [value, weight]
+                # avg = sum(a * weights) / sum(weights)
+                statistics[node_index][0] = (v1 * w1 + v2 * w2) / (w1 + w2)
+                statistics[node_index][1] = w1 + w2
         return statistics
 
     def _precompute_split_midpoints_and_sizes(self):
