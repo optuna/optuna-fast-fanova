@@ -52,7 +52,7 @@ cdef class FanovaTree:
     @property
     def variance(self) -> float:
         if self._variance == -1.0:
-            leaf_node_indices = np.where(self._tree.feature < 0)[0]
+            leaf_node_indices = np.nonzero(self._tree.feature < 0)[0]
             statistics = np.asarray(self._statistics, order='C')[leaf_node_indices]
             values = statistics[:, 0]
             weights = statistics[:, 1]
