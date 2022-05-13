@@ -22,12 +22,12 @@ cdef extern from "math.h" nogil:
 cdef class FanovaTree:
     cdef:
         Tree _tree
+        SIZE_t _n_features
+        double _variance
         double [:,:] _statistics, _search_spaces
         cnp.npy_bool[:,:] _subtree_active_features
-        double _variance
         object _split_midpoints
         object _split_sizes
-        SIZE_t _n_features
 
     def __cinit__(self, Tree tree, cnp.ndarray search_spaces):
         assert search_spaces.shape[0] == tree.n_features
@@ -62,8 +62,8 @@ cdef class FanovaTree:
     def get_marginal_variance(self, features: np.ndarray) -> float:
         cdef:
             SIZE_t i, n_loop = 1
+            SIZE_t[:] active_nodes_buf
             double value, weight
-            int[:] active_nodes_buf
             double[:, :, :] active_search_spaces_buf
             double[:] values, weights
             cnp.ndarray[cnp.npy_bool, cast = True, ndim = 1] active_features
@@ -84,7 +84,7 @@ cdef class FanovaTree:
         sample = np.full(self._n_features, fill_value=np.nan, dtype=np.float64)
         active_features = np.zeros_like(np.asarray(sample), dtype=np.bool_)
 
-        active_nodes_buf = np.empty(shape=self._tree.node_count, dtype=np.int32)
+        active_nodes_buf = np.empty(shape=self._tree.node_count, dtype=np.int)
         active_search_spaces_buf = np.empty(shape=(self._tree.node_count, self._search_spaces.shape[0], 2), dtype=np.float64)
 
         values = np.empty(shape=n_loop, dtype=np.float64)
@@ -108,9 +108,9 @@ cdef class FanovaTree:
         return variance
 
     @cython.boundscheck(False)
-    cdef inline bint _is_subtree_active(self, int node_index, cnp.npy_bool[:] active_features) nogil:
+    cdef inline bint _is_subtree_active(self, SIZE_t node_index, cnp.npy_bool[:] active_features) nogil:
         cdef:
-            int i
+            SIZE_t i
             cnp.npy_bool[:] subtree_active_feature = self._subtree_active_features[node_index]
         for i in range(active_features.shape[0]):
             if active_features[i] and subtree_active_feature[i]:
@@ -119,7 +119,7 @@ cdef class FanovaTree:
 
     @cython.boundscheck(False)
     cdef (double, double) _get_marginalized_statistics(
-        self, double[:] feature_vector, cnp.npy_bool[:] active_features, int[:] active_nodes, double[:, :, :] active_search_spaces
+        self, double[:] feature_vector, cnp.npy_bool[:] active_features, SIZE_t[:] active_nodes, double[:, :, :] active_search_spaces
     ) nogil:
         cdef:
             double[:,:] buf
@@ -182,7 +182,7 @@ cdef class FanovaTree:
 
     cdef cnp.npy_bool[:,:] _precompute_subtree_active_features(self):
         cdef:
-            int node_index
+            SIZE_t node_index
             cnp.ndarray subtree_active_features = np.full((self._tree.node_count, self._n_features), fill_value=False)
             Node* node
 
@@ -201,7 +201,7 @@ def _precompute_statistics(Tree tree, double[:,:] search_spaces):
     cdef:
         double[:,:] statistics
         double[:,:,:] subspaces
-        int node_index, n_nodes = tree.node_count
+        SIZE_t node_index, n_nodes = tree.node_count
         double v1, v2, w1, w2
         Node* node = tree.nodes
 
@@ -238,7 +238,7 @@ def _precompute_statistics(Tree tree, double[:,:] search_spaces):
 cdef _precompute_split_midpoints_and_sizes(Tree tree, double[:,:] search_spaces):
     cdef:
         SIZE_t node_index, feature
-        int n_features = search_spaces.shape[0]
+        SIZE_t n_features = search_spaces.shape[0]
         Node* node
 
     all_split_values = [set() for _ in range(n_features)]
@@ -292,7 +292,7 @@ cdef inline void _get_node_right_child_subspaces(
 
 @cython.boundscheck(False)
 cdef inline void _get_subspaces(
-    double[:,:] search_spaces, int search_spaces_column, int feature, double threshold, double[:,:] buf
+    double[:,:] search_spaces, SIZE_t search_spaces_column, SIZE_t feature, double threshold, double[:,:] buf
 ) nogil:
     buf[...] = search_spaces
     buf[feature, search_spaces_column] = threshold
