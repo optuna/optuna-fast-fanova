@@ -2,23 +2,22 @@
 
 optuna-fast-fanova provides Cython-accelerated version of [FanovaImportanceEvaluator](https://optuna.readthedocs.io/en/stable/reference/generated/optuna.importance.FanovaImportanceEvaluator.html#optuna.importance.FanovaImportanceEvaluator).
 
-
 | n_trials | n_params | n_trees      | fANOVA (Optuna) | fast-fanova     |
 |----------|----------|--------------|-----------------|-----------------|
-| 1000     | 32       | 64 (default) | 71.044s         | 6.198s (-91.3%) |
-| 1000     | 8        | 64 (default) | 92.360s         | 5.836s (-93.7%) |
-| 1000     | 2        | 64 (default) | 51.937s         | 2.978s (-94.3%) |
-| 1000     | 32       | 32           | 35.852s         | 3.147s (-91.2%) |
-| 1000     | 8        | 32           | 46.271s         | 2.938s (-93.7%) |
-| 1000     | 2        | 32           | 26.196s         | 1.497s (-94.3%) |
-| 100      | 32       | 64 (default) | 1.653s          | 0.411s (-75.2%) |
-| 100      | 8        | 64 (default) | 1.646s          | 0.241s (-85.4%) |
-| 100      | 2        | 64 (default) | 1.232s          | 0.177s (-85.6%) |
-| 100      | 32       | 32           | 0.878s          | 0.216s (-75.4%) |
-| 100      | 8        | 32           | 0.816s          | 0.130s (-84.0%) |
-| 100      | 2        | 32           | 0.627s          | 0.091s (-85.4%) |
+| 1000     | 32       | 64 (default) | 72.326s         | 3.191s (-95.6%) |
+| 1000     | 8        | 64 (default) | 94.002s         | 2.493s (-97.3%) |
+| 1000     | 2        | 64 (default) | 52.941s         | 1.472s (-97.2%) |
+| 1000     | 32       | 32           | 36.452s         | 1.641s (-95.5%) |
+| 1000     | 8        | 32           | 46.983s         | 1.258s (-97.3%) |
+| 1000     | 2        | 32           | 26.843s         | 0.770s (-97.1%) |
+| 100      | 32       | 64 (default) | 1.721s          | 0.329s (-80.9%) |
+| 100      | 8        | 64 (default) | 1.673s          | 0.156s (-90.7%) |
+| 100      | 2        | 64 (default) | 1.255s          | 0.114s (-90.9%) |
+| 100      | 32       | 32           | 0.899s          | 0.170s (-81.1%) |
+| 100      | 8        | 32           | 0.836s          | 0.081s (-90.3%) |
+| 100      | 2        | 32           | 0.644s          | 0.059s (-90.9%) |
 
-[The benchmark script](./tools/benchmark.py) was run on my laptop so the times should not be taken precisely.
+[The benchmark script](./tools/benchmark.py) was run on my laptop (Macbook M1 Pro) so the times should not be taken precisely.
 
 ### Installation
 
