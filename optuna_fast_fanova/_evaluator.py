@@ -58,6 +58,7 @@ class FanovaImportanceEvaluator(BaseImportanceEvaluator):
                 "`target=lambda t: t.values[0]` for the first objective value."
             )
 
+        # TODO(c-bata): Add completed_trials argument that optuna-dashboard uses.
         completed_trials = study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,))
         _fast_check_evaluate_args(completed_trials, params)
         if params is None:
