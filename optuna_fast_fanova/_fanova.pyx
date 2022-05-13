@@ -27,6 +27,7 @@ cdef class FanovaTree:
         double _variance
         object _split_midpoints
         object _split_sizes
+        SIZE_t _n_features
 
     def __cinit__(self, Tree tree, cnp.ndarray search_spaces):
         assert search_spaces.shape[0] == tree.n_features
@@ -34,6 +35,7 @@ cdef class FanovaTree:
 
         self._tree = tree
         self._search_spaces = search_spaces
+        self._n_features = search_spaces.shape[0]
         self._statistics = _precompute_statistics(tree, search_spaces)
 
         split_midpoints, split_sizes = _precompute_split_midpoints_and_sizes(tree, search_spaces)
@@ -63,6 +65,7 @@ cdef class FanovaTree:
             int[:] active_nodes_buf
             double[:, :, :] active_search_spaces_buf
             double[:] values, weights
+            cnp.ndarray[cnp.npy_bool, cast = True, ndim = 1] active_features
 
         assert features.size > 0
 
@@ -77,7 +80,8 @@ cdef class FanovaTree:
         product_midpoints = itertools.product(*midpoints)
         product_sizes = itertools.product(*sizes)
 
-        sample = np.full(self._n_features(), fill_value=np.nan, dtype=np.float64)
+        sample = np.full(self._n_features, fill_value=np.nan, dtype=np.float64)
+        active_features = np.zeros_like(np.asarray(sample), dtype=np.bool_)
 
         active_nodes_buf = np.empty(shape=self._tree.node_count, dtype=np.int32)
         active_search_spaces_buf = np.empty(shape=(self._tree.node_count, self._search_spaces.shape[0], 2), dtype=np.float64)
@@ -87,7 +91,10 @@ cdef class FanovaTree:
         for i, (midpoints, sizes) in enumerate(zip(product_midpoints, product_sizes)):
             sample[features] = np.array(midpoints)
 
-            value, weight = self._get_marginalized_statistics(sample, active_nodes_buf, active_search_spaces_buf)
+            value, weight = self._get_marginalized_statistics(
+                sample, active_features,
+                active_nodes_buf, active_search_spaces_buf
+            )
             weight *= float(np.prod(sizes))
 
             values[i] = value
@@ -110,12 +117,11 @@ cdef class FanovaTree:
         return False
 
     cdef (double, double) _get_marginalized_statistics(
-        self, double[:] feature_vector, int[:] active_nodes, double[:, :, :] active_search_spaces
+        self, double[:] feature_vector, cnp.npy_bool[:] active_features, int[:] active_nodes, double[:, :, :] active_search_spaces
     ):
         cdef:
             cnp.ndarray next_subspace
             double[:,:] buf
-            cnp.ndarray[cnp.npy_bool, cast=True, ndim=1] marginalized_features, active_features
             double response
 
             double sum_weighted_value = 0, sum_weight = 0, tmp_weight, weighted_average
@@ -127,7 +133,6 @@ cdef class FanovaTree:
         active_nodes[active_nodes_index] = 0
         active_search_spaces[active_nodes_index, ...] = self._search_spaces
 
-        active_features = np.zeros_like(np.asarray(feature_vector), dtype=np.bool_)
         for i in range(feature_vector.shape[0]):
             if isnan(feature_vector[i]):
                 active_search_spaces[active_nodes_index, i, 0] = 0.0
@@ -177,7 +182,7 @@ cdef class FanovaTree:
     cdef cnp.npy_bool[:,:] _precompute_subtree_active_features(self):
         cdef:
             int node_index
-            cnp.ndarray subtree_active_features = np.full((self._tree.node_count, self._n_features()), fill_value=False)
+            cnp.ndarray subtree_active_features = np.full((self._tree.node_count, self._n_features), fill_value=False)
             Node* node
 
         for node_index in reversed(range(self._tree.node_count)):
@@ -188,9 +193,6 @@ cdef class FanovaTree:
                 subtree_active_features[node_index] |= subtree_active_features[node.right_child]
 
         return subtree_active_features
-
-    cdef inline int _n_features(self):
-        return self._search_spaces.shape[0]
 
 
 @cython.boundscheck(False)
