@@ -248,7 +248,6 @@ cdef _precompute_split_midpoints_and_sizes(Tree tree, double[:,:] search_spaces)
     sizes = []
 
     for feature in range(n_features):
-        # _marginal_varianceにもこの構造が引き継がれるなら、index配列を用意すれば速くできそう
         feature_split_values = np.array(list(all_split_values[feature]), dtype=np.float64)
         feature_split_values.sort()
 

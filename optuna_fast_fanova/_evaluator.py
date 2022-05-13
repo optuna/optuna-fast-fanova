@@ -12,7 +12,6 @@ import numpy as np
 from optuna._transform import _SearchSpaceTransform
 from optuna.distributions import BaseDistribution
 from optuna.importance._base import BaseImportanceEvaluator
-from optuna.samplers import intersection_search_space
 from optuna.study import Study
 from optuna.trial import FrozenTrial
 from optuna.trial import TrialState
@@ -62,7 +61,7 @@ class FanovaImportanceEvaluator(BaseImportanceEvaluator):
         completed_trials = study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,))
         _fast_check_evaluate_args(completed_trials, params)
         if params is None:
-            distributions = intersection_search_space(study)
+            distributions = _fast_intersection_search_space(completed_trials)
         else:
             distributions = _fast_get_distributions(completed_trials, params)
 
