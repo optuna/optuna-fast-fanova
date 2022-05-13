@@ -62,6 +62,7 @@ cdef class FanovaTree:
     def get_marginal_variance(self, features: np.ndarray) -> float:
         cdef:
             SIZE_t i, n_loop = 1
+            double value, weight
             int[:] active_nodes_buf
             double[:, :, :] active_search_spaces_buf
             double[:] values, weights
@@ -116,11 +117,11 @@ cdef class FanovaTree:
                 return True
         return False
 
+    @cython.boundscheck(False)
     cdef (double, double) _get_marginalized_statistics(
         self, double[:] feature_vector, cnp.npy_bool[:] active_features, int[:] active_nodes, double[:, :, :] active_search_spaces
-    ):
+    ) nogil:
         cdef:
-            cnp.ndarray next_subspace
             double[:,:] buf
             double response
 
