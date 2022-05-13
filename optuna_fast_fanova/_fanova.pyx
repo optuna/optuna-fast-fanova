@@ -36,7 +36,7 @@ cdef class FanovaTree:
         self._search_spaces = search_spaces
         self._statistics = _precompute_statistics(tree, search_spaces)
 
-        split_midpoints, split_sizes = self._precompute_split_midpoints_and_sizes()
+        split_midpoints, split_sizes = _precompute_split_midpoints_and_sizes(tree, search_spaces)
         subtree_active_features = self._precompute_subtree_active_features()
         self._split_midpoints = split_midpoints
         self._split_sizes = split_sizes
@@ -174,49 +174,6 @@ cdef class FanovaTree:
         weighted_average = sum_weighted_value / sum_weight
         return weighted_average, sum_weight
 
-    def _precompute_split_midpoints_and_sizes(self):
-        midpoints = []
-        sizes = []
-        cdef int feature
-
-        search_spaces = self._search_spaces
-        for feature, feature_split_values in enumerate(self._compute_features_split_values()):
-            feature_split_values = np.concatenate(
-                (
-                    np.atleast_1d(search_spaces[feature, 0]),
-                    feature_split_values,
-                    np.atleast_1d(search_spaces[feature, 1]),
-                )
-            )
-            midpoint = 0.5 * (feature_split_values[1:] + feature_split_values[:-1])
-            size = feature_split_values[1:] - feature_split_values[:-1]
-
-            midpoints.append(midpoint)
-            sizes.append(size)
-
-        return midpoints, sizes
-
-    def _compute_features_split_values(self):
-        all_split_values = [set() for _ in range(self._n_features())]
-
-        cdef:
-            int node_index
-            Node* node
-
-        for node_index in range(self._tree.node_count):
-            node = self._tree.nodes + node_index
-            if node.feature >= 0:  # Not leaf.
-                all_split_values[node.feature].add(node.threshold)
-
-        sorted_all_split_values = []
-
-        for split_values in all_split_values:
-            split_values_array = np.array(list(split_values), dtype=np.float64)
-            split_values_array.sort()
-            sorted_all_split_values.append(split_values_array)
-
-        return sorted_all_split_values
-
     cdef cnp.npy_bool[:,:] _precompute_subtree_active_features(self):
         cdef:
             int node_index
@@ -273,6 +230,42 @@ def _precompute_statistics(Tree tree, double[:,:] search_spaces):
                 statistics[node_index][0] = (v1 * w1 + v2 * w2) / (w1 + w2)
                 statistics[node_index][1] = w1 + w2
     return statistics
+
+
+cdef _precompute_split_midpoints_and_sizes(Tree tree, double[:,:] search_spaces):
+    cdef:
+        SIZE_t node_index, feature
+        int n_features = search_spaces.shape[0]
+        Node* node
+
+    all_split_values = [set() for _ in range(n_features)]
+    for node_index in range(tree.node_count):
+        node = tree.nodes + node_index
+        if node.feature >= 0:  # Not leaf.
+            all_split_values[node.feature].add(node.threshold)
+
+    midpoints = []
+    sizes = []
+
+    for feature in range(n_features):
+        # _marginal_varianceにもこの構造が引き継がれるなら、index配列を用意すれば速くできそう
+        feature_split_values = np.array(list(all_split_values[feature]), dtype=np.float64)
+        feature_split_values.sort()
+
+        feature_split_values = np.concatenate(
+            (
+                np.atleast_1d(search_spaces[feature, 0]),
+                feature_split_values,
+                np.atleast_1d(search_spaces[feature, 1]),
+            )
+        )
+        midpoint = 0.5 * (feature_split_values[1:] + feature_split_values[:-1])
+        size = feature_split_values[1:] - feature_split_values[:-1]
+
+        midpoints.append(midpoint)
+        sizes.append(size)
+
+    return midpoints, sizes
 
 
 @cython.boundscheck(False)
