@@ -31,10 +31,17 @@ class FanovaImportanceEvaluator(BaseImportanceEvaluator):
         seed:
             Controls the randomness of the forest. For deterministic behavior, specify a value
             other than :obj:`None`.
+        completed_trials:
+            Avoid to call ``study.get_trials()`` and use this value instead (default: None).
     """
 
     def __init__(
-        self, *, n_trees: int = 64, max_depth: int = 64, seed: Optional[int] = None
+        self,
+        *,
+        n_trees: int = 64,
+        max_depth: int = 64,
+        seed: Optional[int] = None,
+        completed_trials: Optional[List[FrozenTrial]] = None,
     ) -> None:
         self._forest = RandomForestRegressor(
             n_estimators=n_trees,
@@ -43,6 +50,7 @@ class FanovaImportanceEvaluator(BaseImportanceEvaluator):
             min_samples_leaf=1,
             random_state=seed,
         )
+        self._completed_trials = completed_trials
 
     def evaluate(
         self,
@@ -58,8 +66,11 @@ class FanovaImportanceEvaluator(BaseImportanceEvaluator):
                 "`target=lambda t: t.values[0]` for the first objective value."
             )
 
-        # TODO(c-bata): Add completed_trials argument that optuna-dashboard uses.
-        completed_trials = study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,))
+        if self._completed_trials is None:
+            completed_trials = study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,))
+        else:
+            completed_trials = self._completed_trials
+
         _fast_check_evaluate_args(completed_trials, params)
         if params is None:
             distributions = _fast_intersection_search_space(completed_trials)
