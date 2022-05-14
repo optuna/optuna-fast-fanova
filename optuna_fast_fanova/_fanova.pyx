@@ -196,7 +196,8 @@ cdef class FanovaTree:
         return subtree_active_features
 
 
-cdef double cy_prod(double[:] items):
+@cython.boundscheck(False)
+cdef double cy_prod(double[:] items) nogil:
     cdef:
         double r = 1
         SIZE_t i
