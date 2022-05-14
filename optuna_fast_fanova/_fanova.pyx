@@ -14,6 +14,7 @@ cnp.import_array()
 
 
 ctypedef cnp.npy_intp SIZE_t  # Type for indices and counters
+ctypedef cnp.npy_bool BOOL_t  # for boolean
 
 cdef extern from "math.h" nogil:
     bint isnan(double x)
@@ -25,11 +26,11 @@ cdef class FanovaTree:
         SIZE_t _n_features
         double _variance
         double [:,:] _statistics, _search_spaces
-        cnp.npy_bool[:,:] _subtree_active_features
+        BOOL_t[:,:] _subtree_active_features
         object _split_midpoints
         object _split_sizes
 
-    def __cinit__(self, Tree tree, cnp.ndarray search_spaces):
+    def __cinit__(self, Tree tree, double[:,:] search_spaces):
         assert search_spaces.shape[0] == tree.n_features
         assert search_spaces.shape[1] == 2
 
@@ -66,7 +67,7 @@ cdef class FanovaTree:
             double value, weight
             double[:, :, :] active_search_spaces_buf
             double[:] values, weights
-            cnp.ndarray[cnp.npy_bool, cast = True, ndim = 1] active_features
+            cnp.ndarray[BOOL_t, cast = True, ndim = 1] active_features
 
         assert features.size > 0
 
@@ -108,10 +109,10 @@ cdef class FanovaTree:
         return variance
 
     @cython.boundscheck(False)
-    cdef inline bint _is_subtree_active(self, SIZE_t node_index, cnp.npy_bool[:] active_features) nogil:
+    cdef inline BOOL_t _is_subtree_active(self, SIZE_t node_index, BOOL_t[:] active_features) nogil:
         cdef:
             SIZE_t i
-            cnp.npy_bool[:] subtree_active_feature = self._subtree_active_features[node_index]
+            BOOL_t[:] subtree_active_feature = self._subtree_active_features[node_index]
         for i in range(active_features.shape[0]):
             if active_features[i] and subtree_active_feature[i]:
                 return True
@@ -119,7 +120,7 @@ cdef class FanovaTree:
 
     @cython.boundscheck(False)
     cdef (double, double) _get_marginalized_statistics(
-        self, double[:] feature_vector, cnp.npy_bool[:] active_features, SIZE_t[:] active_nodes, double[:, :, :] active_search_spaces
+        self, double[:] feature_vector, BOOL_t[:] active_features, SIZE_t[:] active_nodes, double[:, :, :] active_search_spaces
     ) nogil:
         cdef:
             double[:,:] buf
@@ -180,7 +181,7 @@ cdef class FanovaTree:
         weighted_average = sum_weighted_value / sum_weight
         return weighted_average, sum_weight
 
-    cdef cnp.npy_bool[:,:] _precompute_subtree_active_features(self):
+    cdef BOOL_t[:,:] _precompute_subtree_active_features(self):
         cdef:
             SIZE_t node_index
             cnp.ndarray subtree_active_features = np.full((self._tree.node_count, self._n_features), fill_value=False)
