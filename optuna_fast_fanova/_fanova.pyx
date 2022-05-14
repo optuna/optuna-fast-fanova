@@ -96,7 +96,7 @@ cdef class FanovaTree:
                 sample, active_features,
                 active_nodes_buf, active_search_spaces_buf
             )
-            weight *= float(np.prod(sizes))
+            weight *= cy_prod(np.array(sizes, dtype=np.float64))
 
             values[i] = value
             weights[i] = weight
@@ -194,6 +194,15 @@ cdef class FanovaTree:
                 subtree_active_features[node_index] |= subtree_active_features[node.right_child]
 
         return subtree_active_features
+
+
+cdef double cy_prod(double[:] items):
+    cdef:
+        double r = 1
+        SIZE_t i
+    for i in range(items.shape[0]):
+        r *= items[i]
+    return r
 
 
 @cython.boundscheck(False)
