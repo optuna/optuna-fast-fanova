@@ -1,8 +1,4 @@
 """
-Append above directive to _fanova.pyx.
-  # cython: profile=True
-
-Then execute following commands.
 $ python dump_cprofile_stats.py
 $ gprof2dot -f pstats ./fanova-profile.stats | dot -Tpng -o profile.png
 """
@@ -36,7 +32,7 @@ def main():
     study = create_study("profile-fanova.db")
 
     profiler = cProfile.Profile()
-    evaluator = FanovaImportanceEvaluator(n_trees=16, seed=0)
+    evaluator = FanovaImportanceEvaluator(n_trees=64, seed=0)
     profiler.runcall(optuna.importance.get_param_importances, study, evaluator=evaluator)
     profiler.dump_stats("./fanova-profile.stats")
 
