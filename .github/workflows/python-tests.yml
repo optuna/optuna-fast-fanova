@@ -19,10 +19,8 @@ jobs:
           architecture: x64
       - name: Install dependencies
         run: |
-          pip install --progress-bar off --upgrade pip setuptools
-          pip install --progress-bar off numpy scikit-learn Cython>=3.0.0a10
-          pip install --progress-bar off .
-          pip install --progress-bar off flake8 black isort
+          python3 -m pip install --progress-bar off --upgrade pip setuptools
+          python3 -m pip install --progress-bar off flake8 black isort
       - run: flake8 . --show-source
       - run: black --check --diff .
       - run: isort --check --diff .
@@ -40,10 +38,10 @@ jobs:
           architecture: x64
       - name: Install dependencies
         run: |
-          pip install --progress-bar off --upgrade pip setuptools
-          pip install --progress-bar off numpy scikit-learn Cython>=3.0.0a10
-          pip install --progress-bar off .
-          pip install --progress-bar off pytest
+          python3 -m pip install --progress-bar off --upgrade pip setuptools
+          python3 -m pip install --progress-bar off numpy scikit-learn Cython>=3.0.0a10
+          python3 -m pip install --progress-bar off .
+          python3 -m pip install --progress-bar off pytest
       - run: pytest tests/
   test-with-optuna-master:
     runs-on: ubuntu-latest
@@ -56,9 +54,8 @@ jobs:
           architecture: x64
       - name: Install dependencies
         run: |
-          pip install --progress-bar off --upgrade pip setuptools
-          pip install --progress-bar off numpy scikit-learn Cython>=3.0.0a10
-          pip install --progress-bar off --upgrade git+https://github.com/optuna/optuna.git
-          pip install --progress-bar off .
-          pip install --progress-bar off pytest
+          python3 -m pip install --progress-bar off --upgrade pip setuptools
+          python3 -m pip install --progress-bar off numpy scikit-learn Cython>=3.0.0a10 git+https://github.com/optuna/optuna.git
+          python3 -m pip install --progress-bar off .
+          python3 -m pip install --progress-bar off pytest
       - run: pytest tests/
