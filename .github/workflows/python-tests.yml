@@ -35,11 +35,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
-      - run: python3 -m pip install --progress-bar off --upgrade pip setuptools
-      - run: python3 -m pip install --progress-bar off numpy scikit-learn Cython>=3.0.0a10 pytest
-      - run: python3 setup.py build_ext --inplace
-      - run: python3 -m pip install --progress-bar off .
-      - run: pytest tests/
+      - run: |
+          python3 -m pip install --progress-bar off --upgrade pip setuptools
+          pip install numpy scikit-learn "Cython>=3.0.0a10" pytest
+
+          python3 setup.py build_ext --inplace
+          pip install .
+      - run: pytest tests
   test-with-optuna-master:
     runs-on: ubuntu-latest
     steps:
@@ -52,7 +54,9 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --progress-bar off --upgrade pip setuptools
-          python3 -m pip install --progress-bar off numpy scikit-learn Cython>=3.0.0a10 git+https://github.com/optuna/optuna.git pytest
+          pip install numpy scikit-learn "Cython>=3.0.0a10" pytest
+
           python3 setup.py build_ext --inplace
-          python3 -m pip install --progress-bar off .
-      - run: pytest tests/
+          pip install --progress-bar off .
+          pip install --upgrade git+https://github.com/optuna/optuna.git
+      - run: pytest tests
