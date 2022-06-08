@@ -14,7 +14,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export TAGNAME=$(jq --raw-output .ref "$GITHUB_EVENT_PATH" | sed -e "s/refs\/tags\///")
-          gh release create $TAG_NAME --draft
+          gh release create $TAGNAME --draft
   build_wheels:
     needs: create_draft_release
     name: Build wheels on ${{ matrix.os }}
@@ -36,7 +36,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export TAGNAME=$(jq --raw-output .ref "$GITHUB_EVENT_PATH" | sed -e "s/refs\/tags\///")
-          gh release upload $TAG_NAME ./wheelhouse/*.whl
+          gh release upload $TAGNAME ./wheelhouse/*.whl
 
   build_sdist:
     needs: create_draft_release
@@ -65,4 +65,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export TAGNAME=$(jq --raw-output .ref "$GITHUB_EVENT_PATH" | sed -e "s/refs\/tags\///")
-          gh release upload $TAG_NAME ./dist/*.tar.gz
+          gh release upload $TAGNAME ./dist/*.tar.gz
