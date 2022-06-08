@@ -1,0 +1,62 @@
+name: tests
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/python-tests.yml'
+      - 'pyproject.toml'
+      - '**.py'
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+          architecture: x64
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --progress-bar off --upgrade pip setuptools
+          python3 -m pip install --progress-bar off black isort
+      - run: black --check --diff .
+      - run: isort --check --diff .
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+      - run: |
+          python3 -m pip install --progress-bar off --upgrade pip setuptools
+          pip install numpy scikit-learn "Cython>=3.0.0a10" pytest
+
+          python3 setup.py build_ext --inplace
+          pip install .
+      - run: pytest tests
+  test-with-optuna-master:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python 3
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+          architecture: x64
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --progress-bar off --upgrade pip setuptools
+          pip install numpy scikit-learn "Cython>=3.0.0a10" pytest
+
+          python3 setup.py build_ext --inplace
+          pip install --progress-bar off .
+          pip install --upgrade git+https://github.com/optuna/optuna.git
+      - run: pytest tests
