@@ -50,6 +50,7 @@ if __name__ == "__main__":
         version=get_version(),
         description="Cython accelerated fANOVA implementation for Optuna",
         long_description=get_long_description(),
+        long_description_content_type="text/markdown",
         author="Masashi Shibata",
         author_email="mshibata@preferred.jp",
         project_urls={
