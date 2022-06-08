@@ -39,6 +39,7 @@ jobs:
         run: |
           python3 -m pip install --progress-bar off --upgrade pip setuptools
           python3 -m pip install --progress-bar off numpy scikit-learn Cython>=3.0.0a10
+          python3 setup.py build_ext --inplace
           python3 -m pip install --progress-bar off .
           python3 -m pip install --progress-bar off pytest
       - run: pytest tests/
@@ -55,6 +56,7 @@ jobs:
         run: |
           python3 -m pip install --progress-bar off --upgrade pip setuptools
           python3 -m pip install --progress-bar off numpy scikit-learn Cython>=3.0.0a10 git+https://github.com/optuna/optuna.git
+          python3 setup.py build_ext --inplace
           python3 -m pip install --progress-bar off .
           python3 -m pip install --progress-bar off pytest
       - run: pytest tests/
