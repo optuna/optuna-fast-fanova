@@ -1,0 +1,22 @@
+name: Download dists from GitHub release and publish to PyPI
+on:
+  release:
+    types:
+      - published
+jobs:
+  pypi:
+    name: Download Python distributions and publish them to PyPI
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Download Python distributions from GitHub release
+      run: |
+        export TAGNAME=$(jq --raw-output .tag_name "$GITHUB_EVENT_PATH")
+        gh release download $TAG_NAME ./dist
+
+    - name: Publish distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
