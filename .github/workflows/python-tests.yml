@@ -45,7 +45,7 @@ jobs:
   check-sdist:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
     name: Check sdist package on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
@@ -59,7 +59,7 @@ jobs:
       - run: python3 -m pip install numpy scikit-learn "Cython>=3.0.0a10"
       - run: python3 setup.py sdist
       - run: python3 -m pip install ./dist/optuna-fast-fanova-*.*.*.tar.gz
-      - run: python3 example.py
+      - run: cd tools && python3 example.py  # Avoid relative import
   test-with-optuna-master:
     runs-on: ubuntu-latest
     steps:
