@@ -31,11 +31,9 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --progress-bar off --upgrade pip setuptools
-          pip install numpy scikit-learn "Cython>=3.0.0a10"
 
       - name: Build sdist
         run: |
-          python setup.py build_ext --inplace
           python setup.py sdist
 
       - name: Upload a sdist package to a GitHub release

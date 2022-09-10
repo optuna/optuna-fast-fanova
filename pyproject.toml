@@ -1,3 +1,48 @@
+[build-system]
+requires = ["setuptools>=61", "numpy", "scikit-learn", "Cython>=3.0.0a10"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optuna-fast-fanova"
+description = "Cython accelerated fANOVA implementation for Optuna"
+readme = "README.md"
+authors = [
+  { name = "Masashi Shibata", "email" = "mshibata@preferred.jp" }
+]
+requires-python = ">=3.6"
+dependencies = [
+    "optuna",
+    "numpy",
+    "scikit-learn",
+]
+license = {text = "MIT License"}
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "optuna_fast_fanova.__version__"}
+
+[project.urls]
+"Sources" = "https://github.com/optuna/optuna-fast-fanova"
+"Bug Tracker" = "https://github.com/optuna/optuna-fast-fanova/issues"
+
 [tool.black]
 line-length = 99
 target-version = ['py39']
