@@ -38,8 +38,12 @@ dynamic = ["version"]
 
 [tool.setuptools_scm]
 write_to = "optuna_fast_fanova/_version.py"
+# this empty section means: use_scm_version=True
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
 
 [project.urls]
+"Homepage" = "https://github.com/optuna/optuna-fast-fanova"
 "Sources" = "https://github.com/optuna/optuna-fast-fanova"
 "Bug Tracker" = "https://github.com/optuna/optuna-fast-fanova/issues"
 
