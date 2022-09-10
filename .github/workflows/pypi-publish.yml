@@ -15,7 +15,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         export TAGNAME=$(jq --raw-output .tag_name "$GITHUB_EVENT_PATH")
-        gh release download $TAG_NAME ./dist
+        gh release download $TAG_NAME -p '*.tar.gz' -D ./dist
 
     - name: Publish distribution to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
