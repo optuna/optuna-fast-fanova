@@ -8,6 +8,9 @@ __pycache__/
 *.egg-info/
 *.pyc
 
+## setuptools_scm
+optuna_fast_fanova/_version.py
+
 ## Cython
 *.c
 *.so
