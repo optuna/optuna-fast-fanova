@@ -1,4 +1,5 @@
 import optuna
+
 from optuna_fast_fanova import FanovaImportanceEvaluator
 
 
