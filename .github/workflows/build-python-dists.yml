@@ -35,8 +35,8 @@ jobs:
 
       - name: Build sdist
         run: |
-          # Not sure, but git tag does not seem to be set. So I set tag here for setuptools_scm 
-          git tag $(jq --raw-output .ref "$GITHUB_EVENT_PATH" | sed -e "s/refs\/tags\///")
+          # Not sure, but HEAD does not seem to be set on the tag. So here I checkout to the tag for setuptools_scm 
+          git checkout $(jq --raw-output .ref "$GITHUB_EVENT_PATH" | sed -e "s/refs\/tags\///")
           python3 setup.py sdist
 
       - name: Upload a sdist package to a GitHub release
