@@ -9,7 +9,7 @@ from setuptools import setup
 
 if __name__ == "__main__":
     setup(
-        packages=find_packages(exclude=("tests", "tests.*")),
+        packages=find_packages(exclude=("tests", "tests.*", "example*")),
         ext_modules=cythonize(
             [
                 Extension(
