@@ -6,20 +6,11 @@ from setuptools import setup
 from setuptools.command.build_ext import build_ext
 
 
-try:
-    from Cython.Build import cythonize
-
-    ext = ".pyx"
-except ImportError:
-    cythonize = None
-    ext = ".c"
-
-
 class LazyImportBuildExt(build_ext):
     def finalize_options(self) -> None:
-        # cythoinze() must be lazily called since Cython's build requires scikit-learn.
-        if cythonize is not None:
-            self.extensions = cythonize(self.extensions)
+        from Cython.Build import cythonize
+
+        self.extensions = cythonize(self.extensions)
         super().finalize_options()
 
     def run(self) -> None:
@@ -58,19 +49,19 @@ if __name__ == "__main__":
             "Bug Tracker": "https://github.com/optuna/optuna-fast-fanova/issues",
         },
         # You need to install Cython when building this package from sources.
-        setup_requires=["numpy", "scikit-learn"],
+        setup_requires=["numpy", "scikit-learn", "Cython>=3.0.0a10"],
         install_requires=["optuna"],
         packages=find_packages(exclude=("tests", "tests.*")),
         ext_modules=[
             Extension(
                 "optuna_fast_fanova._fanova",
-                sources=[os.path.join("optuna_fast_fanova", "_fanova" + ext)],
+                sources=[os.path.join("optuna_fast_fanova", "_fanova.pyx")],
                 language="c",
             )
         ],
         cmdclass={"build_ext": LazyImportBuildExt},
         include_package_data=False,
-        package_data={"optuna_fast_fanova": ["*.c", "*.pyx"]},
+        package_data={"optuna_fast_fanova": ["*.pyx"]},
         classifiers=[
             "Development Status :: 2 - Pre-Alpha",
             "Intended Audience :: Science/Research",
