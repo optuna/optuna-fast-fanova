@@ -31,13 +31,9 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --progress-bar off --upgrade pip setuptools
-          python3 -m pip install numpy scikit-learn "Cython>=3.0.0a10"
+          python3 -m pip install numpy scikit-learn "Cython>=3.0.0a10" setuptools_scm
 
-      - name: Build sdist
-        run: |
-          # Not sure, but HEAD does not seem to be set on the tag. So here I checkout to the tag for setuptools_scm 
-          git checkout $(jq --raw-output .ref "$GITHUB_EVENT_PATH" | sed -e "s/refs\/tags\///")
-          python3 setup.py sdist
+      - run: python3 setup.py sdist
 
       - name: Upload a sdist package to a GitHub release
         env:
