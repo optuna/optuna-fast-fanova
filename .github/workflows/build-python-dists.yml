@@ -34,7 +34,10 @@ jobs:
           python3 -m pip install numpy scikit-learn "Cython>=3.0.0a10"
 
       - name: Build sdist
-        run: python3 setup.py sdist
+        run: |
+          # Not sure, but git tag does not seem to be set. So I set tag here for setuptools_scm 
+          git tag $(jq --raw-output .ref "$GITHUB_EVENT_PATH" | sed -e "s/refs\/tags\///")
+          python3 setup.py sdist
 
       - name: Upload a sdist package to a GitHub release
         env:
