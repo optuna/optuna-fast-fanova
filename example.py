@@ -5,7 +5,7 @@ from optuna_fast_fanova import FanovaImportanceEvaluator
 def objective(trial):
     x = trial.suggest_float("x", -10, 10)
     y = trial.suggest_int("y", -10, 10)
-    return x ** 2 + y
+    return x**2 + y
 
 
 if __name__ == "__main__":

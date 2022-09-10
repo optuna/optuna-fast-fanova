@@ -56,9 +56,10 @@ jobs:
           python-version: 3.9
           architecture: x64
       - run: python3 -m pip install --progress-bar off --upgrade pip setuptools
+      - run: python3 -m pip install numpy scikit-learn "Cython>=3.0.0a10"
       - run: python3 setup.py sdist
-      - run: pip install ./dist/optuna-fast-fanova-*.*.*.tar.gz
-      - run: python example.py
+      - run: python3 -m pip install ./dist/optuna-fast-fanova-*.*.*.tar.gz
+      - run: python3 example.py
   test-with-optuna-master:
     runs-on: ubuntu-latest
     steps:
