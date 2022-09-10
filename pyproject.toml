@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "optuna-fast-fanova"
 description = "Cython accelerated fANOVA implementation for Optuna"
+readme = "README.md"
 authors = [
   { name = "Masashi Shibata", "email" = "mshibata@preferred.jp" }
 ]
@@ -33,11 +34,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dynamic = ["version", "readme"]
+dynamic = ["version"]
 
 [tool.setuptools.dynamic]
 version = {attr = "optuna_fast_fanova.__version__"}
-readme = {file = ["README.md"]}
 
 [tool.black]
 line-length = 99
