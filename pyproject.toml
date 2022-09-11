@@ -15,7 +15,7 @@ dependencies = [
     "numpy",
     "scikit-learn",
 ]
-license = {text = "MIT License"}
+license = { text = "MIT License" }
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Science/Research",
@@ -35,6 +35,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dynamic = ["version"]
+
+[tool.setuptools.packages.find]
+where = ["."]
 
 [tool.setuptools_scm]
 write_to = "optuna_fast_fanova/_version.py"
