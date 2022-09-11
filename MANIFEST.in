@@ -1,0 +1,4 @@
+include *.pyx
+exclude tools/*
+exclude tests/*
+exclude .github/*
