@@ -21,6 +21,11 @@ Supported Python versions are 3.7 or later.
 $ pip install optuna-fast-fanova
 ```
 
+Please note that this library depends on the scikit-learn's C-API (Cython pxd files).
+However, its ABI may contain breaking changes, even in patch releases.
+If you install optuna-fast-fanova with scikit-learn v1.1.1 and then upgrade scikit-learn to v1.1.2, optuna-fast-fanova will not work.
+Please reinstall optuna-fast-fanova if you update scikit-learn.
+
 ### Usage
 
 Usage is like this:
