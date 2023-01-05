@@ -85,7 +85,7 @@ cdef class FanovaTree:
         sample = np.full(self._n_features, fill_value=np.nan, dtype=np.float64)
         active_features = np.zeros_like(np.asarray(sample), dtype=np.bool_)
 
-        active_nodes_buf = np.empty(shape=self._tree.node_count, dtype=np.int)
+        active_nodes_buf = np.empty(shape=self._tree.node_count, dtype=np.int64)
         active_search_spaces_buf = np.empty(shape=(self._tree.node_count, self._search_spaces.shape[0], 2), dtype=np.float64)
 
         values = np.empty(shape=n_loop, dtype=np.float64)
