@@ -1,5 +1,10 @@
 ## optuna-fast-fanova
 
+> [!IMPORTANT]
+> The maintainance for `optuna-fast-fanova` has been discontinued.
+>
+> We recommend using [`PedAnovaImportanceEvaluator`](https://optuna.readthedocs.io/en/v3.6.1/reference/generated/optuna.importance.PedAnovaImportanceEvaluator.html) introduced in Optuna v3.6 release, as an alternative.
+
 optuna-fast-fanova provides Cython-accelerated version of [FanovaImportanceEvaluator](https://optuna.readthedocs.io/en/stable/reference/generated/optuna.importance.FanovaImportanceEvaluator.html#optuna.importance.FanovaImportanceEvaluator).
 
 | n_trials | n_params | n_trees | fANOVA (Optuna) | fast-fanova     |
